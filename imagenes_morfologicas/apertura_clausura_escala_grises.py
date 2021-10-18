@@ -20,11 +20,11 @@ def erosion(A):
     # Esquina (m-1, 0)
     Aux = A[m-2: m-1, 0:1]
     C[m-1, 0] = np.min(np.min(Aux))
-    
+
     # Esquina (m-1, n-1)
     Aux = A[m-2: m-1, n-2:n-1]
     C[m-1, n-1] = np.min(np.min(Aux))
-    
+
 # ------------------------------- Bordes -------------------------------
 
     # Borde superior e inferior
@@ -40,18 +40,13 @@ def erosion(A):
 
    # Borde derecho e izquierdo
     for y in range(1, m-1):
-        # Derecho
-        Aux = A[m-2: m-1, x-1:x+1]
-        C[m-1, x] = np.min(np.min(Aux))
-        
-        Wc1 = B[y-1, n-2] + B[y, n-2] + B[y+1, n-2]
-        Wc2 = B[y-1, n-1] + B[y, n-1] + B[y+1, n-1]
-        A_t[y, n-1] = (1/6) * (Wc1 + Wc2)
+        # Izquierdo
+        Aux = A[y-1: y+1, 0:1]
+        C[y, 0] = np.min(np.min(Aux))
 
         # Izquierdo
-        Wc1 = B[y-1, 0] + B[y, 0] + B[y+1, 0]
-        Wc2 = B[y-1, 1] + B[y, 1] + B[y+1, 1]
-        A_t[y, 0] = (1/6) * (Wc1 + Wc2)
+        Aux = A[y-1: y+1, n-2:n-1]
+        C[y, n-1] = np.min(np.min(Aux))
 
     for x in range(1, m-1):
         for y in range(1, n-1):
@@ -65,6 +60,46 @@ def dilatacion(A):
     m, n = A.shape
     C = np.zeros((m, n))
 
+# ------------------------------- Esquinas -----------------------------
+
+    # Esquina (0,0)
+    Aux = A[0: 1, 0:1]
+    C[0, 0] = np.min(np.min(Aux))
+
+    # Esquina (0, n-1)
+    Aux = A[0: 1, n-2:n-1]
+    C[0, n-1] = np.min(np.min(Aux))
+
+    # Esquina (m-1, 0)
+    Aux = A[m-2: m-1, 0:1]
+    C[m-1, 0] = np.min(np.min(Aux))
+
+    # Esquina (m-1, n-1)
+    Aux = A[m-2: m-1, n-2:n-1]
+    C[m-1, n-1] = np.min(np.min(Aux))
+
+# ------------------------------- Bordes -------------------------------
+
+    # Borde superior e inferior
+    for x in range(1, n-1):
+        # Superior
+        # Esquina (m-1, n-1)
+        Aux = A[0: 1, x-1:x+1]
+        C[0, x] = np.min(np.min(Aux))
+
+        # Inferior
+        Aux = A[m-2: m-1, x-1:x+1]
+        C[m-1, x] = np.min(np.min(Aux))
+
+   # Borde derecho e izquierdo
+    for y in range(1, m-1):
+        # Izquierdo
+        Aux = A[y-1: y+1, 0:1]
+        C[y, 0] = np.min(np.min(Aux))
+
+        # Izquierdo
+        Aux = A[y-1: y+1, n-2:n-1]
+        C[y, n-1] = np.min(np.min(Aux))
     for x in range(1, m-1):
         for y in range(1, n-1):
             Aux = A[x-1: x+1, y-1:y+1]
