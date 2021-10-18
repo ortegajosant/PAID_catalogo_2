@@ -1,63 +1,126 @@
-from scipy import ndimage
+from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
 
-from skimage.morphology import (erosion, dilation, opening, closing,  # noqa
-                                white_tophat)
 
+def erosion(A):
+    m, n = A.shape
+    C = np.zeros((m, n))
 
-def binaria(X):
-    # Toma una imagen en blanco y negro y retorna una imagen de valores de 0 y 255
-    # Entradas: - una imagen en blanco y negro.
-    # Salidas: - una imagen binaria con valores de 0 o 255.
-    m = len(X)
-    n = len(X[0])
-    z = np.size(X[0, 0])
-    Y = np.zeros([m, n, z])
-    Y[X >= 127] = 255
-    Y[X < 127] = 0
-    return Y[:, :, 0]
+# ------------------------------- Esquinas -----------------------------
 
+    # Esquina (0,0)
+    Aux = A[0: 1, 0:1]
+    C[0, 0] = np.min(np.min(Aux))
 
-def apertura(A, B):
-    # Función que toma una imagen y un elemento estructurado y obtiene
-    # la operación morfologica de apertura entre la imagen y el elemento.
-    # Entradas: - A: imagen binaria
-    #           - B: elemento estructurado.
-    # salidas: - imagen con el resultado de la apertura entre A y B.
-    A = binaria(A)
-    B = binaria(B)
-    C = ndimage.binary_opening(A, B)
+    # Esquina (0, n-1)
+    Aux = A[0: 1, n-2:n-1]
+    C[0, n-1] = np.min(np.min(Aux))
+
+    # Esquina (m-1, 0)
+    Aux = A[m-2: m-1, 0:1]
+    C[m-1, 0] = np.min(np.min(Aux))
+    
+    # Esquina (m-1, n-1)
+    Aux = A[m-2: m-1, n-2:n-1]
+    C[m-1, n-1] = np.min(np.min(Aux))
+    
+# ------------------------------- Bordes -------------------------------
+
+    # Borde superior e inferior
+    for x in range(1, n-1):
+        # Superior
+        # Esquina (m-1, n-1)
+        Aux = A[0: 1, x-1:x+1]
+        C[0, x] = np.min(np.min(Aux))
+
+        # Inferior
+        Aux = A[m-2: m-1, x-1:x+1]
+        C[m-1, x] = np.min(np.min(Aux))
+
+   # Borde derecho e izquierdo
+    for y in range(1, m-1):
+        # Derecho
+        Aux = A[m-2: m-1, x-1:x+1]
+        C[m-1, x] = np.min(np.min(Aux))
+        
+        Wc1 = B[y-1, n-2] + B[y, n-2] + B[y+1, n-2]
+        Wc2 = B[y-1, n-1] + B[y, n-1] + B[y+1, n-1]
+        A_t[y, n-1] = (1/6) * (Wc1 + Wc2)
+
+        # Izquierdo
+        Wc1 = B[y-1, 0] + B[y, 0] + B[y+1, 0]
+        Wc2 = B[y-1, 1] + B[y, 1] + B[y+1, 1]
+        A_t[y, 0] = (1/6) * (Wc1 + Wc2)
+
+    for x in range(1, m-1):
+        for y in range(1, n-1):
+            Aux = A[x-1: x+1, y-1:y+1]
+            C[x, y] = np.min(np.min(Aux))
+
     return C
 
-def clausura(A, B):
-    # Función que toma una imagen y un elemento estructurado y obtiene
-    # la operación morfologica de clausura entre la imagen y el elemento.
-    # Entradas: - A: imagen binaria
-    #           - B: elemento estructurado.
-    # salidas: - imagen con el resultado de la clausura entre A y B.
-    A = binaria(A)
-    B = binaria(B)
-    C = ndimage.binary_closing(A, B)
+
+def dilatacion(A):
+    m, n = A.shape
+    C = np.zeros((m, n))
+
+    for x in range(1, m-1):
+        for y in range(1, n-1):
+            Aux = A[x-1: x+1, y-1:y+1]
+            C[x, y] = np.max(np.max(Aux))
+
     return C
 
 
-A = plt.imread("imagen5.jpg")
-B = np.ones([3, 3])*255
+def apertura(A):
+    B = erosion(A)
+    C = dilatacion(B)
+    return B - C
+
+
+def clausura(A):
+    B = dilatacion(A)
+    C = erosion(B)
+    return B - C
+
+
+def top_hat(A, A_apertura):
+    B = A - A_apertura
+    return B
+
+
+def bottom_hat(A, A_clausura):
+    B = A_clausura - A
+    return B
+
+
+A = Image.open("imagen11.jpg", "r")
+A = np.array(A, dtype=np.uint8)
 
 plt.figure()
-plt.subplot(131)
-plt.title("Imagen original")
-plt.imshow(binaria(A), cmap="gray")
+plt.subplot(231)
+plt.title("Imagen Original")
+plt.imshow(A, cmap="gray")
 
-C = apertura(A, B)
-plt.subplot(132)
-plt.title("Imagen con apertura")
-plt.imshow(C, cmap="gray")
+A_apertura = apertura(A)
+plt.subplot(232)
+plt.title("Imagen Apertura")
+plt.imshow(A_apertura, cmap="gray")
 
-D = clausura(A, B)
-plt.subplot(133)
-plt.title("Imagen con clausura")
-plt.imshow(D, cmap="gray")
+A_clausura = clausura(A)
+plt.subplot(233)
+plt.title("Imagen Clausura")
+plt.imshow(A_clausura, cmap="gray")
+
+A_top_hat = top_hat(A, A_apertura)
+plt.subplot(234)
+plt.title("Imagen Top Hat")
+plt.imshow(A_top_hat, cmap="gray")
+
+A_bottom_hat = bottom_hat(A, A_clausura)
+plt.subplot(235)
+plt.title("Imagen Bottom Hat")
+plt.imshow(A_bottom_hat, cmap="gray")
 
 plt.show()
