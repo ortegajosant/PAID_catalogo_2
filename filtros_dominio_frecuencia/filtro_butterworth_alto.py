@@ -19,19 +19,19 @@ def llenado_cuadrantes(A):
 
 def filtro_butterworth_alto(A):
     """
-    Filtro paso alto, implementado siguiendo los fundamentos del LPF Gaussiano
+    Filtro paso alto butterworth
     """
     A = np.array(A)
     F_A = np.fft.fftshift(np.fft.fft2(A))
     m, n = A.shape
-    D0 = 200
+    D0 = 10
     D1 = np.zeros([m, n])
     k = 1  # orden
     F_B = np.zeros([m, n])
     for u in range(m):
         for v in range(n):
             D_uv = np.sqrt(u**2+v**2)
-            F_B[u, v] = 1/(1+(D0/(1+D_uv)**(2*k)))
+            F_B[u, v] = 1/(1+((D0/D_uv)**(2*k)))
     F_B = llenado_cuadrantes(F_B)
     F_B = np.fft.fftshift(F_B)
 
